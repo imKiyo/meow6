@@ -1,6 +1,12 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Heart, Download, User } from "lucide-react";
+import {
+  ArrowLeft,
+  Heart,
+  Download,
+  User,
+  Link as LinkIcon,
+} from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { favoritesAPI } from "../services/api";
 
@@ -128,6 +134,7 @@ function FavoriteGifCard({ gif, onToggleFavorite }) {
   const [isHovered, setIsHovered] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const API_BASE =
     import.meta.env.VITE_API_URL?.replace("/api", "") ||
@@ -145,6 +152,17 @@ function FavoriteGifCard({ gif, onToggleFavorite }) {
     link.href = gifUrl;
     link.download = gif.filename;
     link.click();
+  };
+
+  const copyLink = async (e) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(gifUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
   };
 
   const handleToggleFavorite = async (e) => {
@@ -207,6 +225,18 @@ function FavoriteGifCard({ gif, onToggleFavorite }) {
           <Heart size={18} className="fill-white text-white" />
         </button>
         <button
+          onClick={copyLink}
+          className={`p-2.5 rounded-full shadow-lg hover:scale-110 transition-all duration-200 ${
+            copied ? "bg-green-500" : "bg-white"
+          }`}
+          title={copied ? "Copied!" : "Copy Link"}
+        >
+          <LinkIcon
+            size={18}
+            className={copied ? "text-white" : "text-gray-700"}
+          />
+        </button>
+        <button
           onClick={downloadGif}
           className="p-2.5 bg-white rounded-full shadow-lg hover:scale-110 transition-all duration-200"
           title="Download GIF"
@@ -214,6 +244,13 @@ function FavoriteGifCard({ gif, onToggleFavorite }) {
           <Download size={18} className="text-gray-700" />
         </button>
       </div>
+
+      {/* Copied notification */}
+      {copied && (
+        <div className="absolute top-16 right-3 bg-green-500 text-white px-3 py-1 rounded-lg shadow-lg text-sm font-medium animate-pulse">
+          Link copied!
+        </div>
+      )}
     </div>
   );
 }
