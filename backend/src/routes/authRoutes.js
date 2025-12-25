@@ -10,7 +10,11 @@ router.post("/login", authController.login);
 router.get("/me", auth, async (req, res) => {
   res.json({
     message: "Auth is working!",
-    user: req.user,
+    user: {
+      id: req.user.userId, // Add this
+      userId: req.user.userId, // Keep for backward compatibility
+      username: req.user.username,
+    },
   });
 });
 

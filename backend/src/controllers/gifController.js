@@ -319,3 +319,58 @@ exports.deleteGif = async (req, res) => {
     res.status(500).json({ error: "Failed to delete GIF" });
   }
 };
+
+/**
+ * Get related GIFs based on tags
+ */
+exports.getRelatedGifs = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { limit = 8 } = req.query;
+
+    // Get current GIF's tags
+    const tagsResult = await pool.query(
+      `SELECT t.name
+       FROM gif_tags gt
+       JOIN tags t ON gt.tag_id = t.id
+       WHERE gt.gif_id = $1`,
+      [id],
+    );
+
+    if (tagsResult.rows.length === 0) {
+      return res.json({ gifs: [] });
+    }
+
+    const tags = tagsResult.rows.map((row) => row.name);
+
+    // Find GIFs with similar tags
+    const result = await pool.query(
+      `SELECT DISTINCT g.*,
+              array_agg(DISTINCT t.name) as tags,
+              u.username as uploader_username,
+              COUNT(DISTINCT gt2.tag_id) as matching_tags
+       FROM gifs g
+       JOIN gif_tags gt ON g.id = gt.gif_id
+       JOIN tags t ON gt.tag_id = t.id
+       LEFT JOIN gif_tags gt2 ON g.id = gt2.gif_id AND EXISTS (
+         SELECT 1 FROM tags t2 WHERE t2.id = gt2.tag_id AND t2.name = ANY($2)
+       )
+       LEFT JOIN users u ON g.uploader_id = u.id
+       WHERE g.id != $1
+         AND EXISTS (
+           SELECT 1 FROM gif_tags gt3
+           JOIN tags t3 ON gt3.tag_id = t3.id
+           WHERE gt3.gif_id = g.id AND t3.name = ANY($2)
+         )
+       GROUP BY g.id, u.username
+       ORDER BY matching_tags DESC, g.favorite_count DESC, g.uploaded_at DESC
+       LIMIT $3`,
+      [id, tags, limit],
+    );
+
+    res.json({ gifs: result.rows });
+  } catch (error) {
+    console.error("Get related GIFs error:", error);
+    res.status(500).json({ error: "Failed to fetch related GIFs" });
+  }
+};

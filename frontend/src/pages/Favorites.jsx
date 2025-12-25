@@ -1,14 +1,15 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 import {
   ArrowLeft,
   Heart,
   Download,
   User,
   Link as LinkIcon,
+  Trash2,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { favoritesAPI } from "../services/api";
+import { useNavigate, Link } from "react-router-dom";
 
 function Favorites() {
   const [favorites, setFavorites] = useState([]);
@@ -52,6 +53,20 @@ function Favorites() {
       });
     } catch (error) {
       console.error("Error toggling favorite:", error);
+    }
+  };
+
+  // In the Favorites component, add delete handler
+  const handleDeleteGif = async (gifId) => {
+    if (window.confirm("Are you sure you want to delete this GIF?")) {
+      try {
+        await api.delete(`/gifs/${gifId}`);
+        // Remove from favorites list
+        setFavorites((prev) => prev.filter((gif) => gif.id !== gifId));
+      } catch (error) {
+        console.error("Error deleting GIF:", error);
+        alert(error.response?.data?.error || "Failed to delete GIF");
+      }
     }
   };
 
@@ -100,6 +115,8 @@ function Favorites() {
                 key={gif.id}
                 gif={gif}
                 onToggleFavorite={handleToggleFavorite}
+                onDelete={handleDeleteGif}
+                currentUserId={user?.userid}
               />
             ))}
           </div>
@@ -130,7 +147,8 @@ function Favorites() {
   );
 }
 
-function FavoriteGifCard({ gif, onToggleFavorite }) {
+function FavoriteGifCard({ gif, onToggleFavorite, onDelete, currentUserId }) {
+  const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
@@ -146,8 +164,12 @@ function FavoriteGifCard({ gif, onToggleFavorite }) {
   const gifUrl = `${API_BASE}/${storagePath}`;
   const thumbnailUrl = `${API_BASE}/${thumbnailPath}`;
 
+  const handleClick = () => {
+    navigate(`/gif/${gif.id}`);
+  };
+
   const downloadGif = (e) => {
-    e.stopPropagation();
+    e.stopPropagation(); // Prevent navigation when clicking download
     const link = document.createElement("a");
     link.href = gifUrl;
     link.download = gif.filename;
@@ -155,7 +177,7 @@ function FavoriteGifCard({ gif, onToggleFavorite }) {
   };
 
   const copyLink = async (e) => {
-    e.stopPropagation();
+    e.stopPropagation(); // Prevent navigation when clicking copy
     try {
       await navigator.clipboard.writeText(gifUrl);
       setCopied(true);
@@ -166,7 +188,7 @@ function FavoriteGifCard({ gif, onToggleFavorite }) {
   };
 
   const handleToggleFavorite = async (e) => {
-    e.stopPropagation();
+    e.stopPropagation(); // Prevent navigation when clicking favorite
     if (isTogglingFavorite) return;
 
     setIsTogglingFavorite(true);
@@ -177,11 +199,21 @@ function FavoriteGifCard({ gif, onToggleFavorite }) {
     }
   };
 
+  const handleDelete = async (e) => {
+    e.stopPropagation();
+    if (onDelete) {
+      await onDelete(gif.id);
+    }
+  };
+
+  const isOwner = currentUserId && gif.uploader_id === currentUserId;
+
   return (
     <div
       className="group relative bg-white rounded-lg shadow hover:shadow-xl transition-all overflow-hidden cursor-pointer"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={handleClick}
     >
       {/* GIF Display Area */}
       <div className="aspect-video bg-gray-200 relative overflow-hidden">
@@ -243,6 +275,17 @@ function FavoriteGifCard({ gif, onToggleFavorite }) {
         >
           <Download size={18} className="text-gray-700" />
         </button>
+
+        {/* Delete button - only show if user owns the GIF */}
+        {isOwner && (
+          <button
+            onClick={handleDelete}
+            className="p-2.5 bg-red-600 rounded-full shadow-lg hover:scale-110 hover:bg-red-700 transition-all duration-200"
+            title="Delete GIF"
+          >
+            <Trash2 size={18} className="text-white" />
+          </button>
+        )}
       </div>
 
       {/* Copied notification */}

@@ -12,6 +12,7 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import api from "../services/api";
 import { favoritesAPI } from "../services/api";
+import { useNavigate } from "react-router-dom";
 
 function Home() {
   const [gifs, setGifs] = useState([]);
@@ -244,6 +245,7 @@ function Home() {
 }
 
 function GifCard({ gif, favorites, onToggleFavorite }) {
+  const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
@@ -261,8 +263,12 @@ function GifCard({ gif, favorites, onToggleFavorite }) {
 
   const isFavorited = favorites[gif.id] || false;
 
+  const handleClick = () => {
+    navigate(`/gif/${gif.id}`);
+  };
+
   const downloadGif = (e) => {
-    e.stopPropagation();
+    e.stopPropagation(); // Prevent navigation when clicking download
     const link = document.createElement("a");
     link.href = gifUrl;
     link.download = gif.filename;
@@ -270,7 +276,7 @@ function GifCard({ gif, favorites, onToggleFavorite }) {
   };
 
   const copyLink = async (e) => {
-    e.stopPropagation();
+    e.stopPropagation(); // Prevent navigation when clicking copy
     try {
       await navigator.clipboard.writeText(gifUrl);
       setCopied(true);
@@ -281,7 +287,7 @@ function GifCard({ gif, favorites, onToggleFavorite }) {
   };
 
   const handleToggleFavorite = async (e) => {
-    e.stopPropagation();
+    e.stopPropagation(); // Prevent navigation when clicking favorite
     if (isTogglingFavorite) return;
 
     setIsTogglingFavorite(true);
@@ -297,6 +303,7 @@ function GifCard({ gif, favorites, onToggleFavorite }) {
       className="group relative bg-white rounded-lg shadow hover:shadow-xl transition-all overflow-hidden cursor-pointer"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={handleClick}
     >
       {/* GIF Display Area */}
       <div className="aspect-video bg-gray-200 relative overflow-hidden">

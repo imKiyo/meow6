@@ -10,6 +10,7 @@ import Register from "./pages/Register";
 import Home from "./pages/Home";
 import Upload from "./pages/Upload";
 import Favorites from "./pages/Favorites";
+import GifDetail from "./pages/GifDetail";
 
 // Protected Route wrapper
 function ProtectedRoute({ children }) {
@@ -83,6 +84,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Favorites />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/gif/:id"
+            element={
+              <ProtectedRoute>
+                <GifDetail />
               </ProtectedRoute>
             }
           />

@@ -13,6 +13,9 @@ router.get("/", gifController.getGifs);
 // Get single GIF (public)
 router.get("/:id", gifController.getGifById);
 
+// Get related GIFs (public)
+router.get("/:id/related", gifController.getRelatedGifs);
+
 // Delete GIF (protected)
 router.delete("/:id", auth, gifController.deleteGif);
 
