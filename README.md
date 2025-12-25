@@ -1,0 +1,22 @@
+TO DO:
+
+- gif buttons from the preview should be moved to the bottom in a cleaner way
+- unique mosaic view of all the present gifs deppended of its sizes
+- clean header and make it consistent
+- gif details should popout on the same page in a smaller window when you leftclick instead of its own page(?)
+- shortcut to highlight searchbar
+- remember the current search and mby scroll position so going back would not reset the view to top
+- figure out whats the best file format for storage
+- make it convert the non .gif files to .gif if attempted to upload
+- if multiple images are being uploaded then each gif should have its own tags to fill
+- add checks for users for if they can access the domain and if can upload or rate the gifs
+- allow admin marked users to delete other user gifs and apply suspensions on them
+- user collections
+- gif visibilities
+- user groups? for sharing files
+- account settings
+  - dark mode option (im already blind)
+  - autoplay every gif seen?
+- stresstest many gifs on a single side and decide if any optimalization steps are further needed
+- allow upload of gifs through the link? (especially if theres a way so that the api does not have to go and fetch these themselfs idk im stupid)
+- more secure checks and usage limits/cd's?
