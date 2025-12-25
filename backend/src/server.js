@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
+const path = require("path");
 require("dotenv").config();
 
 const app = express();
@@ -14,12 +15,23 @@ app.use(
     credentials: true,
   }),
 );
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Import routes
 const authRoutes = require("./routes/authRoutes");
+const gifRoutes = require("./routes/gifRoutes");
+
+// Serve static files (GIFs and thumbnails) with CORS
+app.use(
+  "/storage",
+  (req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Cross-Origin-Resource-Policy", "cross-origin");
+    next();
+  },
+  express.static(path.join(__dirname, "../storage")),
+);
 
 // Routes
 app.get("/api/health", (req, res) => {
@@ -27,6 +39,7 @@ app.get("/api/health", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/gifs", gifRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
