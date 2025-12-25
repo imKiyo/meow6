@@ -19,4 +19,12 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Favorites API methods
+export const favoritesAPI = {
+  toggle: (gifId) => api.post(`/favorites/${gifId}`),
+  getFavorites: (params) => api.get("/favorites", { params }),
+  checkFavorites: (gifIds) =>
+    api.get("/favorites/check", { params: { gifIds: gifIds.join(",") } }),
+};
+
 export default api;

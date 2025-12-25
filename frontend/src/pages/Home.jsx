@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Search, Upload, User, LogOut, Heart, Download } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import api from "../services/api";
+import { favoritesAPI } from "../services/api";
 
 function Home() {
   const [gifs, setGifs] = useState([]);
@@ -10,11 +11,19 @@ function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTags, setSelectedTags] = useState([]);
   const [sortBy, setSortBy] = useState("recent");
+  const [favorites, setFavorites] = useState({});
   const { user, logout } = useAuth();
 
   useEffect(() => {
     fetchGifs();
   }, [searchQuery, selectedTags, sortBy]);
+
+  // Check favorites when GIFs change
+  useEffect(() => {
+    if (gifs.length > 0) {
+      checkFavorites();
+    }
+  }, [gifs]);
 
   const fetchGifs = async () => {
     try {
@@ -35,6 +44,39 @@ function Home() {
     }
   };
 
+  const checkFavorites = async () => {
+    try {
+      const gifIds = gifs.map((g) => g.id);
+      const response = await favoritesAPI.checkFavorites(gifIds);
+      setFavorites(response.data.favorites);
+    } catch (error) {
+      console.error("Error checking favorites:", error);
+    }
+  };
+
+  const handleToggleFavorite = async (gifId) => {
+    try {
+      const response = await favoritesAPI.toggle(gifId);
+
+      // Update local state
+      setFavorites((prev) => ({
+        ...prev,
+        [gifId]: response.data.isFavorited,
+      }));
+
+      // Update favorite count in GIFs list
+      setGifs((prev) =>
+        prev.map((gif) =>
+          gif.id === gifId
+            ? { ...gif, favorite_count: response.data.favoriteCount }
+            : gif,
+        ),
+      );
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+    }
+  };
+
   const toggleTag = (tag) => {
     setSelectedTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
@@ -52,6 +94,13 @@ function Home() {
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-3xl font-bold">🎬 GifStash</h1>
             <div className="flex gap-3 items-center">
+              <Link
+                to="/favorites"
+                className="flex items-center gap-2 bg-white/20 px-4 py-2 rounded-lg hover:bg-white/30 transition font-semibold"
+              >
+                <Heart size={18} />
+                <span className="hidden sm:inline">Favorites</span>
+              </Link>
               <Link
                 to="/upload"
                 className="flex items-center gap-2 bg-white text-purple-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition font-semibold"
@@ -152,7 +201,12 @@ function Home() {
         {!loading && gifs.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {gifs.map((gif) => (
-              <GifCard key={gif.id} gif={gif} />
+              <GifCard
+                key={gif.id}
+                gif={gif}
+                favorites={favorites}
+                onToggleFavorite={handleToggleFavorite}
+              />
             ))}
           </div>
         )}
@@ -181,21 +235,22 @@ function Home() {
   );
 }
 
-function GifCard({ gif }) {
+function GifCard({ gif, favorites, onToggleFavorite }) {
   const [isHovered, setIsHovered] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
 
-  // Fix the URL construction
   const API_BASE =
     import.meta.env.VITE_API_URL?.replace("/api", "") ||
     "http://localhost:3000";
 
-  // Remove any leading slashes and construct proper URLs
   const storagePath = gif.storage_path?.replace(/^\//, "");
   const thumbnailPath = gif.thumbnail_path?.replace(/^\//, "");
 
   const gifUrl = `${API_BASE}/${storagePath}`;
   const thumbnailUrl = `${API_BASE}/${thumbnailPath}`;
+
+  const isFavorited = favorites[gif.id] || false;
 
   const downloadGif = (e) => {
     e.stopPropagation();
@@ -203,6 +258,18 @@ function GifCard({ gif }) {
     link.href = gifUrl;
     link.download = gif.filename;
     link.click();
+  };
+
+  const handleToggleFavorite = async (e) => {
+    e.stopPropagation();
+    if (isTogglingFavorite) return;
+
+    setIsTogglingFavorite(true);
+    try {
+      await onToggleFavorite(gif.id);
+    } finally {
+      setIsTogglingFavorite(false);
+    }
   };
 
   return (
@@ -243,21 +310,36 @@ function GifCard({ gif }) {
               <span className="truncate">{gif.uploader_username}</span>
             </span>
             <span className="flex items-center gap-1.5 font-medium text-sm">
-              <Heart size={14} />
+              <Heart size={14} className={isFavorited ? "fill-red-400" : ""} />
               {gif.favorite_count}
             </span>
           </div>
         </div>
       </div>
 
-      {/* Download Button - Only on hover */}
-      <button
-        onClick={downloadGif}
-        className="absolute top-3 right-3 p-2.5 bg-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 hover:scale-110 transition-all duration-200"
-        title="Download GIF"
-      >
-        <Download size={18} className="text-gray-700" />
-      </button>
+      {/* Action Buttons - Only on hover */}
+      <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        <button
+          onClick={handleToggleFavorite}
+          disabled={isTogglingFavorite}
+          className={`p-2.5 rounded-full shadow-lg hover:scale-110 transition-all duration-200 ${
+            isFavorited ? "bg-red-500" : "bg-white"
+          }`}
+          title={isFavorited ? "Unfavorite" : "Favorite"}
+        >
+          <Heart
+            size={18}
+            className={isFavorited ? "fill-white text-white" : "text-gray-700"}
+          />
+        </button>
+        <button
+          onClick={downloadGif}
+          className="p-2.5 bg-white rounded-full shadow-lg hover:scale-110 transition-all duration-200"
+          title="Download GIF"
+        >
+          <Download size={18} className="text-gray-700" />
+        </button>
+      </div>
     </div>
   );
 }

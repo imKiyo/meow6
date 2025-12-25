@@ -21,6 +21,7 @@ app.use(express.urlencoded({ extended: true }));
 // Import routes
 const authRoutes = require("./routes/authRoutes");
 const gifRoutes = require("./routes/gifRoutes");
+const favoritesRoutes = require("./routes/favoritesRoutes");
 
 // Serve static files (GIFs and thumbnails) with CORS
 app.use(
@@ -40,6 +41,7 @@ app.get("/api/health", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/gifs", gifRoutes);
+app.use("/api/favorites", favoritesRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
