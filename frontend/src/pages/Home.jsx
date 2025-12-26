@@ -5,6 +5,7 @@ import {
   Upload,
   User,
   LogOut,
+  Settings,
   Heart,
   Download,
   Link as LinkIcon,
@@ -117,10 +118,13 @@ function Home() {
                 <Upload size={18} />
                 Upload
               </Link>
-              <div className="flex items-center gap-2 bg-white/20 px-4 py-2 rounded-lg">
+              <Link
+                to="/settings"
+                className="flex items-center gap-2 bg-white/20 px-4 py-2 rounded-lg hover:bg-white/30 transition font-semibold"
+              >
                 <User size={18} />
                 <span className="hidden sm:inline">{user?.username}</span>
-              </div>
+              </Link>
               <button
                 onClick={logout}
                 className="flex items-center gap-2 bg-white/20 px-4 py-2 rounded-lg hover:bg-white/30 transition"
@@ -145,6 +149,44 @@ function Home() {
                 className="w-full pl-10 pr-4 py-3 rounded-lg text-gray-900 bg-white dark:bg-gray-800 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-300"
               />
             </div>
+
+            {/* Theme Toggle -rn its kinda ass
+            <div className="flex gap-1 bg-white/20 rounded-lg p-1">
+              <button
+                onClick={() => useAuth().setTheme("light")}
+                className={`px-3 py-2 rounded text-sm font-medium transition ${
+                  useAuth().theme === "light"
+                    ? "bg-white text-purple-600"
+                    : "text-white hover:bg-white/10"
+                }`}
+                title="Light Mode"
+              >
+                ☀️
+              </button>
+              <button
+                onClick={() => useAuth().setTheme("system")}
+                className={`px-3 py-2 rounded text-sm font-medium transition ${
+                  useAuth().theme === "system"
+                    ? "bg-white text-purple-600"
+                    : "text-white hover:bg-white/10"
+                }`}
+                title="System"
+              >
+                💻
+              </button>
+              <button
+                onClick={() => useAuth().setTheme("dark")}
+                className={`px-3 py-2 rounded text-sm font-medium transition ${
+                  useAuth().theme === "dark"
+                    ? "bg-white text-purple-600"
+                    : "text-white hover:bg-white/10"
+                }`}
+                title="Dark Mode"
+              >
+                🌙
+              </button>
+            </div> */}
+
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}

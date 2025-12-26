@@ -12,6 +12,7 @@ import Home from "./pages/Home";
 import Upload from "./pages/Upload";
 import Favorites from "./pages/Favorites";
 import GifDetail from "./pages/GifDetail";
+import Settings from "./pages/Settings";
 import { useState, useEffect } from "react";
 
 // Protected Route wrapper
@@ -46,37 +47,29 @@ function PublicRoute({ children }) {
 
 function App() {
   const [theme, setTheme] = useState(() => {
-    const prefersDark = window.matchMedia(
-      "(prefers-color-scheme: dark)",
-    ).matches;
-    return prefersDark ? "dark" : "light";
+    const saved = localStorage.getItem("theme");
+    if (saved) return saved;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
   });
 
   useEffect(() => {
-    if (theme === "dark") {
+    localStorage.setItem("theme", theme);
+    if (
+      theme === "dark" ||
+      (theme === "system" &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches)
+    ) {
       document.documentElement.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");
     }
   }, [theme]);
 
-  const toggleTheme = () => {
-    setTheme(theme === "light" ? "dark" : "light");
-  };
-
   return (
     <Router>
-      <AuthProvider>
-        <div className="fixed top-4 right-4 z-50">
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-full bg-gray-200 dark:bg-gray-800"
-            >
-              {theme === "light" ? "🌙" : "☀️"}
-            </button>
-          </div>
-        </div>
+      <AuthProvider theme={theme} setTheme={setTheme}>
         <Routes>
           <Route
             path="/login"
@@ -115,6 +108,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Favorites />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Settings />
               </ProtectedRoute>
             }
           />

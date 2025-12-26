@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import api from "../services/api";
 import { AuthContext } from "./auth";
 
-export const AuthProvider = ({ children }) => {
+export const AuthProvider = ({ children, theme, setTheme }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(localStorage.getItem("token"));
@@ -68,6 +68,8 @@ export const AuthProvider = ({ children }) => {
         register,
         logout,
         isAuthenticated: !!user,
+        theme,
+        setTheme,
       }}
     >
       {children}
