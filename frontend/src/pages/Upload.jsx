@@ -1,33 +1,98 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Upload as UploadIcon, X, ArrowLeft } from "lucide-react";
-import { useAuth } from "../contexts/AuthContext";
+import {
+  Upload as UploadIcon,
+  X,
+  ArrowLeft,
+  Link as LinkIcon,
+  Tag as TagIcon,
+} from "lucide-react";
+import { useAuth } from "../contexts/auth";
 import api from "../services/api";
 
 function Upload() {
   const [selectedFiles, setSelectedFiles] = useState([]);
-  const [tags, setTags] = useState("");
+  const [urlInput, setUrlInput] = useState("");
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
-  const { user } = useAuth();
+  useAuth();
 
-  const handleFileSelect = (e) => {
-    const files = Array.from(e.target.files);
-    const gifFiles = files.filter((file) => file.type === "image/gif");
-
+  const handleFiles = (files) => {
+    const gifFiles = Array.from(files).filter(
+      (file) => file.type === "image/gif",
+    );
     if (gifFiles.length !== files.length) {
       setError("Only GIF files are allowed");
       return;
     }
-
-    setSelectedFiles((prev) => [...prev, ...gifFiles]);
+    const newEntries = gifFiles.map((file) => ({
+      file,
+      tags: [],
+      currentInput: "",
+      preview: URL.createObjectURL(file),
+    }));
+    setSelectedFiles((prev) => [...prev, ...newEntries]);
     setError("");
   };
 
+  const handleFileSelect = (e) => handleFiles(e.target.files);
+  const handleDrop = (e) => {
+    e.preventDefault();
+    handleFiles(e.dataTransfer.files);
+  };
+
+  const handleUrlUpload = async () => {
+    if (!urlInput) return;
+    try {
+      const res = await fetch(urlInput);
+      const blob = await res.blob();
+      if (blob.type !== "image/gif") throw new Error("Not a GIF");
+      const file = new File([blob], "downloaded.gif", { type: "image/gif" });
+      handleFiles([file]);
+      setUrlInput("");
+    } catch (err) {
+      setError("Could not fetch GIF from URL.");
+    }
+  };
+
   const removeFile = (index) => {
+    URL.revokeObjectURL(selectedFiles[index].preview);
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleKeyDown = (index, e) => {
+    const updated = [...selectedFiles];
+    const item = updated[index];
+
+    if (e.key === "," || e.key === "Enter") {
+      e.preventDefault();
+      const newTag = item.currentInput.trim();
+      if (newTag && !item.tags.includes(newTag)) {
+        item.tags.push(newTag);
+      }
+      item.currentInput = "";
+    } else if (
+      e.key === "Backspace" &&
+      !item.currentInput &&
+      item.tags.length > 0
+    ) {
+      item.tags.pop();
+    }
+    setSelectedFiles(updated);
+  };
+
+  const updateInput = (index, value) => {
+    const updated = [...selectedFiles];
+    updated[index].currentInput = value;
+    setSelectedFiles(updated);
+  };
+
+  const removeTag = (fileIdx, tagIdx) => {
+    const updated = [...selectedFiles];
+    updated[fileIdx].tags.splice(tagIdx, 1);
+    setSelectedFiles(updated);
   };
 
   const handleUpload = async (e) => {
@@ -40,41 +105,38 @@ function Upload() {
       return;
     }
 
-    const tagArray = tags
-      .split(",")
-      .map((t) => t.trim())
-      .filter((t) => t);
-    if (tagArray.length < 3) {
-      setError("Please add at least 3 tags (comma-separated)");
-      return;
+    const finalizedFiles = selectedFiles.map((item) => {
+      const finalTags = [...item.tags];
+      const leftover = item.currentInput.trim();
+      if (leftover && !finalTags.includes(leftover)) {
+        finalTags.push(leftover);
+      }
+      return { ...item, tags: finalTags };
+    });
+
+    for (const item of finalizedFiles) {
+      if (item.tags.length < 3) {
+        setError(`"${item.file.name}" needs at least 3 tags.`);
+        return;
+      }
     }
 
     setUploading(true);
 
     try {
-      // Upload each file
-      for (const file of selectedFiles) {
+      for (const item of finalizedFiles) {
         const formData = new FormData();
-        formData.append("gif", file);
-        formData.append("tags", tags);
+        formData.append("gif", item.file);
+        formData.append("tags", item.tags.join(", "));
 
         await api.post("/gifs/upload", formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+          headers: { "Content-Type": "multipart/form-data" },
         });
       }
 
-      setSuccess(
-        `Successfully uploaded ${selectedFiles.length} GIF${selectedFiles.length > 1 ? "s" : ""}!`,
-      );
+      setSuccess(`Successfully uploaded ${finalizedFiles.length} GIFs!`);
       setSelectedFiles([]);
-      setTags("");
-
-      // Redirect to home after 2 seconds
-      setTimeout(() => {
-        navigate("/");
-      }, 2000);
+      setTimeout(() => navigate("/"), 2000);
     } catch (err) {
       setError(err.response?.data?.error || "Upload failed");
     } finally {
@@ -83,154 +145,149 @@ function Upload() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg">
         <div className="container mx-auto px-4 py-4 max-w-3xl">
           <Link
             to="/"
             className="flex items-center gap-2 hover:opacity-80 transition mb-2 font-medium"
           >
-            <ArrowLeft size={20} />
-            Back to Home
+            <ArrowLeft size={20} /> Back to Home
           </Link>
           <h1 className="text-3xl font-bold">Upload GIFs</h1>
         </div>
       </header>
 
-      {/* Content */}
       <main className="container mx-auto px-4 py-6 max-w-3xl">
         {error && (
-          <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
+          <div className="mb-4 p-4 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg">
             {error}
           </div>
         )}
-
         {success && (
-          <div className="mb-4 p-4 bg-green-100 text-green-700 rounded-lg">
+          <div className="mb-4 p-4 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-lg">
             {success}
           </div>
         )}
 
         <form onSubmit={handleUpload} className="space-y-6">
-          {/* File Upload Area */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Select GIF Files
+          <div
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={handleDrop}
+            className="border-4 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-12 text-center bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+          >
+            <input
+              type="file"
+              accept="image/gif"
+              multiple
+              onChange={handleFileSelect}
+              className="hidden"
+              id="file-input"
+              disabled={uploading}
+            />
+            <label htmlFor="file-input" className="cursor-pointer">
+              <UploadIcon size={48} className="mx-auto mb-4 text-gray-400" />
+              <p className="text-lg mb-2 font-semibold text-gray-800 dark:text-gray-100">
+                Drop GIFs or click to browse
+              </p>
             </label>
-            <div className="border-4 border-dashed border-gray-300 rounded-lg p-12 text-center bg-white hover:bg-gray-50 transition cursor-pointer">
+            <div className="mt-4 flex max-w-sm mx-auto gap-2">
               <input
-                type="file"
-                accept="image/gif"
-                multiple
-                onChange={handleFileSelect}
-                className="hidden"
-                id="file-input"
-                disabled={uploading}
+                type="text"
+                placeholder="Paste link..."
+                value={urlInput}
+                onChange={(e) => setUrlInput(e.target.value)}
+                className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               />
-              <label htmlFor="file-input" className="cursor-pointer">
-                <UploadIcon size={48} className="mx-auto mb-4 text-gray-400" />
-                <p className="text-lg mb-2 font-semibold">
-                  Drop GIFs here or click to browse
-                </p>
-                <p className="text-sm text-gray-500">Maximum 20MB per file</p>
-              </label>
+              <button
+                type="button"
+                onClick={handleUrlUpload}
+                className="p-2 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 transition"
+              >
+                <LinkIcon size={18} />
+              </button>
             </div>
           </div>
 
-          {/* Selected Files */}
           {selectedFiles.length > 0 && (
-            <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                Selected Files ({selectedFiles.length})
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-gray-500 uppercase tracking-tight">
+                Selected GIFs
               </h3>
-              <div className="space-y-2">
-                {selectedFiles.map((file, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
-                        <img
-                          src={URL.createObjectURL(file)}
-                          alt={file.name}
-                          className="max-w-full max-h-full"
+              {selectedFiles.map((item, fileIdx) => (
+                <div
+                  key={fileIdx}
+                  className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm"
+                >
+                  <div className="flex gap-4">
+                    <img
+                      src={item.preview}
+                      alt="preview"
+                      className="w-24 h-24 object-cover rounded-lg border dark:border-gray-700"
+                    />
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start mb-3">
+                        <p className="text-sm font-bold truncate max-w-[200px]">
+                          {item.file.name}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => removeFile(fileIdx)}
+                          className="text-gray-400 hover:text-red-500"
+                        >
+                          <X size={20} />
+                        </button>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2 p-2 min-h-[42px] border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 focus-within:ring-2 focus-within:ring-purple-500 transition-all">
+                        <TagIcon size={14} className="text-gray-400 ml-1" />
+                        {item.tags.map((tag, tagIdx) => (
+                          <span
+                            key={tagIdx}
+                            className="flex items-center gap-1 bg-purple-600 text-white px-2 py-1 rounded-md text-xs font-semibold"
+                          >
+                            {tag}
+                            <button
+                              type="button"
+                              onClick={() => removeTag(fileIdx, tagIdx)}
+                              className="hover:text-purple-200"
+                            >
+                              <X size={12} />
+                            </button>
+                          </span>
+                        ))}
+                        <input
+                          type="text"
+                          value={item.currentInput}
+                          placeholder={
+                            item.tags.length === 0 ? "Add 3+ tags..." : ""
+                          }
+                          onChange={(e) => updateInput(fileIdx, e.target.value)}
+                          onKeyDown={(e) => handleKeyDown(fileIdx, e)}
+                          className="flex-1 min-w-[120px] bg-transparent outline-none text-sm text-gray-800 dark:text-gray-100"
+                          disabled={uploading}
                         />
                       </div>
-                      <div>
-                        <p className="font-semibold text-sm">{file.name}</p>
-                        <p className="text-xs text-gray-500">
-                          {(file.size / 1024 / 1024).toFixed(2)} MB
-                        </p>
-                      </div>
+
+                      {/* Restored Progress/Requirements Helper */}
+                      <p
+                        className={`mt-2 text-[10px] font-medium ${item.tags.length < 3 ? "text-gray-400" : "text-green-500"}`}
+                      >
+                        {item.tags.length < 3
+                          ? `${3 - item.tags.length} more tag${3 - item.tags.length !== 1 ? "s" : ""} required`
+                          : "Tag requirement met!"}
+                      </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => removeFile(index)}
-                      className="p-2 hover:bg-gray-100 rounded-full transition"
-                      disabled={uploading}
-                    >
-                      <X size={20} className="text-gray-600" />
-                    </button>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
           )}
 
-          {/* Tags Input */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Tags (comma-separated, minimum 3 required)
-            </label>
-            <input
-              type="text"
-              placeholder="e.g., cat, funny, dancing, reaction"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-              disabled={uploading}
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Add at least 3 descriptive tags to help others find your GIFs
-            </p>
-            {tags && (
-              <div className="mt-2 flex flex-wrap gap-2">
-                {tags.split(",").map((tag, i) => {
-                  const trimmedTag = tag.trim();
-                  return trimmedTag ? (
-                    <span
-                      key={i}
-                      className="bg-purple-100 text-purple-700 px-2 py-1 rounded text-sm"
-                    >
-                      {trimmedTag}
-                    </span>
-                  ) : null;
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Upload Guidelines */}
-          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <h4 className="font-semibold text-blue-900 mb-2">
-              Upload Guidelines
-            </h4>
-            <ul className="text-sm text-blue-800 space-y-1">
-              <li>• Maximum file size: 20 MB per GIF</li>
-              <li>• Only .gif files are accepted</li>
-              <li>• Original quality will be preserved</li>
-              <li>• Add descriptive tags for better discoverability</li>
-              <li>• At least 3 tags are required</li>
-            </ul>
-          </div>
-
-          {/* Submit Button */}
           <button
             type="submit"
             disabled={uploading || selectedFiles.length === 0}
-            className="w-full py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-4 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition shadow-lg shadow-purple-500/20 disabled:opacity-50"
           >
             {uploading
               ? "Uploading..."
