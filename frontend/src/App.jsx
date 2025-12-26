@@ -4,13 +4,15 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
-import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { AuthProvider } from "./contexts/AuthContext";
+import { useAuth } from "./contexts/auth";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Home from "./pages/Home";
 import Upload from "./pages/Upload";
 import Favorites from "./pages/Favorites";
 import GifDetail from "./pages/GifDetail";
+import { useState, useEffect } from "react";
 
 // Protected Route wrapper
 function ProtectedRoute({ children }) {
@@ -43,9 +45,38 @@ function PublicRoute({ children }) {
 }
 
 function App() {
+  const [theme, setTheme] = useState(() => {
+    const prefersDark = window.matchMedia(
+      "(prefers-color-scheme: dark)",
+    ).matches;
+    return prefersDark ? "dark" : "light";
+  });
+
+  useEffect(() => {
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(theme === "light" ? "dark" : "light");
+  };
+
   return (
     <Router>
       <AuthProvider>
+        <div className="fixed top-4 right-4 z-50">
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-full bg-gray-200 dark:bg-gray-800"
+            >
+              {theme === "light" ? "🌙" : "☀️"}
+            </button>
+          </div>
+        </div>
         <Routes>
           <Route
             path="/login"

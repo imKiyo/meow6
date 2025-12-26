@@ -1,23 +1,19 @@
-import { createContext, useState, useContext, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import api from "../services/api";
-
-const AuthContext = createContext(null);
+import { AuthContext } from "./auth";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(localStorage.getItem("token"));
 
-  useEffect(() => {
-    // Check if user is logged in on mount
-    if (token) {
-      verifyToken();
-    } else {
-      setLoading(false);
-    }
+  const logout = useCallback(() => {
+    localStorage.removeItem("token");
+    setToken(null);
+    setUser(null);
   }, []);
 
-  const verifyToken = async () => {
+  const verifyToken = useCallback(async () => {
     try {
       const response = await api.get("/auth/me");
       setUser(response.data.user);
@@ -27,7 +23,15 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [logout]);
+
+  useEffect(() => {
+    if (token) {
+      verifyToken();
+    } else {
+      setLoading(false);
+    }
+  }, [token, verifyToken]);
 
   const login = async (email, password) => {
     const response = await api.post("/auth/login", { email, password });
@@ -55,12 +59,6 @@ export const AuthProvider = ({ children }) => {
     return response.data;
   };
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    setToken(null);
-    setUser(null);
-  };
-
   return (
     <AuthContext.Provider
       value={{
@@ -75,12 +73,4 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within AuthProvider");
-  }
-  return context;
 };
