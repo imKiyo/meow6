@@ -317,9 +317,11 @@ function GifDetail() {
         {relatedGifs.length > 0 && (
           <div className="mt-12">
             <h2 className="text-2xl font-bold mb-6">Related GIFs</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4">
+            <div className="masonry-grid">
               {relatedGifs.map((relatedGif) => (
-                <RelatedGifCard key={relatedGif.id} gif={relatedGif} />
+                <div key={relatedGif.id} className="masonry-item">
+                  <RelatedGifCard gif={relatedGif} />
+                </div>
               ))}
             </div>
           </div>
@@ -384,11 +386,11 @@ function RelatedGifCard({ gif }) {
       onMouseLeave={() => setIsHovered(false)}
       className="group relative bg-white rounded-lg shadow hover:shadow-xl transition-all overflow-hidden cursor-pointer"
     >
-      <div className="aspect-video bg-gray-200 relative overflow-hidden">
+      <div className="relative overflow-hidden w-full bg-gray-200">
         <img
           src={isHovered ? gifUrl : thumbnailUrl}
           alt={gif.filename}
-          className="w-full h-full object-cover"
+          className="w-full h-auto block"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 

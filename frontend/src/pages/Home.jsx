@@ -206,16 +206,17 @@ function Home() {
           </div>
         )}
 
-        {/* GIF Grid */}
+        {/* GIF Grid - Masonry Layout */}
         {!loading && gifs.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div className="masonry-grid">
             {gifs.map((gif) => (
-              <GifCard
-                key={gif.id}
-                gif={gif}
-                favorites={favorites}
-                onToggleFavorite={handleToggleFavorite}
-              />
+              <div key={gif.id} className="masonry-item">
+                <GifCard
+                  gif={gif}
+                  favorites={favorites}
+                  onToggleFavorite={handleToggleFavorite}
+                />
+              </div>
             ))}
           </div>
         )}
@@ -268,7 +269,7 @@ function GifCard({ gif, favorites, onToggleFavorite }) {
   };
 
   const downloadGif = (e) => {
-    e.stopPropagation(); // Prevent navigation when clicking download
+    e.stopPropagation();
     const link = document.createElement("a");
     link.href = gifUrl;
     link.download = gif.filename;
@@ -276,7 +277,7 @@ function GifCard({ gif, favorites, onToggleFavorite }) {
   };
 
   const copyLink = async (e) => {
-    e.stopPropagation(); // Prevent navigation when clicking copy
+    e.stopPropagation();
     try {
       await navigator.clipboard.writeText(gifUrl);
       setCopied(true);
@@ -287,7 +288,7 @@ function GifCard({ gif, favorites, onToggleFavorite }) {
   };
 
   const handleToggleFavorite = async (e) => {
-    e.stopPropagation(); // Prevent navigation when clicking favorite
+    e.stopPropagation();
     if (isTogglingFavorite) return;
 
     setIsTogglingFavorite(true);
@@ -305,13 +306,13 @@ function GifCard({ gif, favorites, onToggleFavorite }) {
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleClick}
     >
-      {/* GIF Display Area */}
-      <div className="aspect-video bg-gray-200 relative overflow-hidden">
+      {/* GIF Display Area - Natural aspect ratio */}
+      <div className="relative overflow-hidden w-full bg-gray-200">
         {!imageError ? (
           <img
             src={isHovered ? gifUrl : thumbnailUrl}
             alt={gif.filename}
-            className="w-full h-full object-cover"
+            className="w-full h-auto block"
             onError={() => {
               console.error(
                 "Failed to load:",
@@ -321,7 +322,7 @@ function GifCard({ gif, favorites, onToggleFavorite }) {
             }}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-400">
+          <div className="w-full aspect-video flex items-center justify-center text-gray-400">
             <p className="text-sm">Failed to load GIF</p>
           </div>
         )}

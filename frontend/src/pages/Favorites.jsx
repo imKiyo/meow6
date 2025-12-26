@@ -107,17 +107,16 @@ function Favorites() {
           </div>
         )}
 
-        {/* GIF Grid */}
+        {/* GIF Grid - Masonry Layout */}
         {!loading && favorites.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div className="masonry-grid">
             {favorites.map((gif) => (
-              <FavoriteGifCard
-                key={gif.id}
-                gif={gif}
-                onToggleFavorite={handleToggleFavorite}
-                onDelete={handleDeleteGif}
-                currentUserId={user?.userid}
-              />
+              <div key={gif.id} className="masonry-item">
+                <FavoriteGifCard
+                  gif={gif}
+                  onToggleFavorite={handleToggleFavorite}
+                />
+              </div>
             ))}
           </div>
         )}
@@ -216,12 +215,12 @@ function FavoriteGifCard({ gif, onToggleFavorite, onDelete, currentUserId }) {
       onClick={handleClick}
     >
       {/* GIF Display Area */}
-      <div className="aspect-video bg-gray-200 relative overflow-hidden">
+      <div className="relative overflow-hidden w-full bg-gray-200">
         {!imageError ? (
           <img
             src={isHovered ? gifUrl : thumbnailUrl}
             alt={gif.filename}
-            className="w-full h-full object-cover"
+            className="w-full h-auto block"
             onError={() => setImageError(true)}
           />
         ) : (
