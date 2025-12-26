@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   ArrowLeft,
@@ -11,7 +11,7 @@ import {
   Tag,
   Trash2,
 } from "lucide-react";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../contexts/auth";
 import api, { favoritesAPI } from "../services/api";
 
 function GifDetail() {
@@ -26,12 +26,7 @@ function GifDetail() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
-    fetchGifDetails();
-    fetchRelatedGifs();
-  }, [id]);
-
-  const fetchGifDetails = async () => {
+  const fetchGifDetails = useCallback(async () => {
     try {
       setLoading(true);
       const response = await api.get(`/gifs/${id}`);
@@ -48,16 +43,21 @@ function GifDetail() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, navigate]);
 
-  const fetchRelatedGifs = async () => {
+  const fetchRelatedGifs = useCallback(async () => {
     try {
       const response = await api.get(`/gifs/${id}/related`);
       setRelatedGifs(response.data.gifs);
     } catch (error) {
       console.error("Error fetching related GIFs:", error);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchGifDetails();
+    fetchRelatedGifs();
+  }, [id, fetchGifDetails, fetchRelatedGifs]);
 
   const handleToggleFavorite = async () => {
     try {
@@ -125,7 +125,7 @@ function GifDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-16 w-16 border-4 border-purple-200 border-t-purple-600"></div>
       </div>
     );
@@ -142,7 +142,7 @@ function GifDetail() {
   const gifUrl = `${API_BASE}/${storagePath}`;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
       <header className="bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg">
         <div className="container mx-auto px-4 py-4 max-w-7xl">
@@ -160,8 +160,8 @@ function GifDetail() {
       <main className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="grid lg:grid-cols-2 gap-8">
           {/* LEFT COLUMN - GIF Display */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="bg-gray-100 rounded-lg overflow-hidden mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+            <div className="bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden mb-4">
               <img src={gifUrl} alt={gif.filename} className="w-full h-auto" />
             </div>
 
@@ -172,7 +172,7 @@ function GifDetail() {
                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition ${
                   isFavorited
                     ? "bg-red-500 text-white hover:bg-red-600"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600"
                 }`}
               >
                 <Heart size={20} className={isFavorited ? "fill-white" : ""} />
@@ -216,73 +216,81 @@ function GifDetail() {
 
           {/* RIGHT COLUMN - GIF Info */}
           <div>
-            <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-              <h1 className="text-2xl font-bold mb-4">GIF Details</h1>
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6">
+              <h1 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100">
+                GIF Details
+              </h1>
 
               {/* Stats Grid */}
               <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-purple-50 rounded-lg p-4">
-                  <div className="flex items-center gap-2 text-purple-600 mb-1">
+                <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
+                  <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400 mb-1">
                     <Heart size={18} />
                     <span className="text-sm font-medium">Favorites</span>
                   </div>
-                  <div className="text-2xl font-bold text-purple-700">
+                  <div className="text-2xl font-bold text-purple-700 dark:text-purple-300">
                     {gif.favorite_count}
                   </div>
                 </div>
 
-                <div className="bg-blue-50 rounded-lg p-4">
-                  <div className="flex items-center gap-2 text-blue-600 mb-1">
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+                  <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 mb-1">
                     <Eye size={18} />
                     <span className="text-sm font-medium">Views</span>
                   </div>
-                  <div className="text-2xl font-bold text-blue-700">
+                  <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">
                     {gif.view_count}
                   </div>
                 </div>
 
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="flex items-center gap-2 text-gray-600 mb-1">
+                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 mb-1">
                     <User size={18} />
                     <span className="text-sm font-medium">Uploader</span>
                   </div>
-                  <div className="text-lg font-semibold text-gray-700">
+                  <div className="text-lg font-semibold text-gray-700 dark:text-gray-200">
                     {gif.uploader_username}
                   </div>
                 </div>
 
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="flex items-center gap-2 text-gray-600 mb-1">
+                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 mb-1">
                     <Clock size={18} />
                     <span className="text-sm font-medium">Uploaded</span>
                   </div>
-                  <div className="text-lg font-semibold text-gray-700">
+                  <div className="text-lg font-semibold text-gray-700 dark:text-gray-200">
                     {formatDate(gif.uploaded_at)}
                   </div>
                 </div>
               </div>
 
               {/* File Info */}
-              <div className="border-t pt-4 mb-4">
-                <h3 className="text-sm font-semibold text-gray-600 mb-2 uppercase tracking-wide">
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mb-4">
+                <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">
                   File Information
                 </h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Dimensions:</span>
-                    <span className="font-semibold">
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Dimensions:
+                    </span>
+                    <span className="font-semibold text-gray-800 dark:text-gray-100">
                       {gif.width} × {gif.height}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">File Size:</span>
-                    <span className="font-semibold">
+                    <span className="text-gray-600 dark:text-gray-400">
+                      File Size:
+                    </span>
+                    <span className="font-semibold text-gray-800 dark:text-gray-100">
                       {(gif.file_size / 1024 / 1024).toFixed(2)} MB
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Filename:</span>
-                    <span className="font-semibold truncate max-w-xs">
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Filename:
+                    </span>
+                    <span className="font-semibold truncate max-w-xs text-gray-800 dark:text-gray-100">
                       {gif.filename}
                     </span>
                   </div>
@@ -290,10 +298,10 @@ function GifDetail() {
               </div>
 
               {/* Tags */}
-              <div className="border-t pt-4">
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
                 <div className="flex items-center gap-2 mb-3">
-                  <Tag size={18} className="text-gray-600" />
-                  <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
+                  <Tag size={18} className="text-gray-600 dark:text-gray-400" />
+                  <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">
                     Tags
                   </h3>
                 </div>
@@ -302,7 +310,7 @@ function GifDetail() {
                     <Link
                       key={tag}
                       to={`/?tags=${tag}`}
-                      className="bg-purple-100 text-purple-700 px-3 py-1.5 rounded-full text-sm font-medium hover:bg-purple-200 transition"
+                      className="bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300 px-3 py-1.5 rounded-full text-sm font-medium hover:bg-purple-200 dark:hover:bg-purple-900/70 transition"
                     >
                       {tag}
                     </Link>
@@ -316,7 +324,9 @@ function GifDetail() {
         {/* Related GIFs - OUTSIDE the grid, below everything */}
         {relatedGifs.length > 0 && (
           <div className="mt-12">
-            <h2 className="text-2xl font-bold mb-6">Related GIFs</h2>
+            <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">
+              Related GIFs
+            </h2>
             <div className="masonry-grid">
               {relatedGifs.map((relatedGif) => (
                 <div key={relatedGif.id} className="masonry-item">
@@ -330,15 +340,20 @@ function GifDetail() {
         {/* Delete Confirmation Modal */}
         {showDeleteConfirm && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="p-3 bg-red-100 rounded-full">
-                  <Trash2 size={24} className="text-red-600" />
+                <div className="p-3 bg-red-100 dark:bg-red-900/20 rounded-full">
+                  <Trash2
+                    size={24}
+                    className="text-red-600 dark:text-red-400"
+                  />
                 </div>
-                <h3 className="text-xl font-bold">Delete GIF?</h3>
+                <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">
+                  Delete GIF?
+                </h3>
               </div>
 
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
                 Are you sure you want to delete this GIF? This action cannot be
                 undone.
               </p>
@@ -347,7 +362,7 @@ function GifDetail() {
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
                   disabled={deleting}
-                  className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition disabled:opacity-50"
+                  className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition disabled:opacity-50"
                 >
                   Cancel
                 </button>
@@ -384,9 +399,9 @@ function RelatedGifCard({ gif }) {
       onClick={() => navigate(`/gif/${gif.id}`)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="group relative bg-white rounded-lg shadow hover:shadow-xl transition-all overflow-hidden cursor-pointer"
+      className="group relative bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-xl transition-all overflow-hidden cursor-pointer"
     >
-      <div className="relative overflow-hidden w-full bg-gray-200">
+      <div className="relative overflow-hidden w-full bg-gray-200 dark:bg-gray-700">
         <img
           src={isHovered ? gifUrl : thumbnailUrl}
           alt={gif.filename}

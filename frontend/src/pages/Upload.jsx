@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Upload as UploadIcon, X, ArrowLeft } from "lucide-react";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../contexts/auth";
 import api from "../services/api";
 
 function Upload() {
@@ -11,7 +11,7 @@ function Upload() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
-  const { user } = useAuth();
+  useAuth();
 
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
@@ -83,7 +83,7 @@ function Upload() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
       <header className="bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg">
         <div className="container mx-auto px-4 py-4 max-w-3xl">
@@ -101,13 +101,13 @@ function Upload() {
       {/* Content */}
       <main className="container mx-auto px-4 py-6 max-w-3xl">
         {error && (
-          <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
+          <div className="mb-4 p-4 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg">
             {error}
           </div>
         )}
 
         {success && (
-          <div className="mb-4 p-4 bg-green-100 text-green-700 rounded-lg">
+          <div className="mb-4 p-4 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-lg">
             {success}
           </div>
         )}
@@ -115,10 +115,10 @@ function Upload() {
         <form onSubmit={handleUpload} className="space-y-6">
           {/* File Upload Area */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
               Select GIF Files
             </label>
-            <div className="border-4 border-dashed border-gray-300 rounded-lg p-12 text-center bg-white hover:bg-gray-50 transition cursor-pointer">
+            <div className="border-4 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-12 text-center bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition cursor-pointer">
               <input
                 type="file"
                 accept="image/gif"
@@ -129,11 +129,16 @@ function Upload() {
                 disabled={uploading}
               />
               <label htmlFor="file-input" className="cursor-pointer">
-                <UploadIcon size={48} className="mx-auto mb-4 text-gray-400" />
-                <p className="text-lg mb-2 font-semibold">
+                <UploadIcon
+                  size={48}
+                  className="mx-auto mb-4 text-gray-400 dark:text-gray-500"
+                />
+                <p className="text-lg mb-2 font-semibold text-gray-800 dark:text-gray-100">
                   Drop GIFs here or click to browse
                 </p>
-                <p className="text-sm text-gray-500">Maximum 20MB per file</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Maximum 20MB per file
+                </p>
               </label>
             </div>
           </div>
@@ -141,17 +146,17 @@ function Upload() {
           {/* Selected Files */}
           {selectedFiles.length > 0 && (
             <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-2">
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                 Selected Files ({selectedFiles.length})
               </h3>
               <div className="space-y-2">
                 {selectedFiles.map((file, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200"
+                    className="flex items-center justify-between bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
+                      <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-center">
                         <img
                           src={URL.createObjectURL(file)}
                           alt={file.name}
@@ -159,8 +164,10 @@ function Upload() {
                         />
                       </div>
                       <div>
-                        <p className="font-semibold text-sm">{file.name}</p>
-                        <p className="text-xs text-gray-500">
+                        <p className="font-semibold text-sm text-gray-800 dark:text-gray-100">
+                          {file.name}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
                           {(file.size / 1024 / 1024).toFixed(2)} MB
                         </p>
                       </div>
@@ -168,10 +175,13 @@ function Upload() {
                     <button
                       type="button"
                       onClick={() => removeFile(index)}
-                      className="p-2 hover:bg-gray-100 rounded-full transition"
+                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition"
                       disabled={uploading}
                     >
-                      <X size={20} className="text-gray-600" />
+                      <X
+                        size={20}
+                        className="text-gray-600 dark:text-gray-400"
+                      />
                     </button>
                   </div>
                 ))}
@@ -181,7 +191,7 @@ function Upload() {
 
           {/* Tags Input */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
               Tags (comma-separated, minimum 3 required)
             </label>
             <input
@@ -189,10 +199,10 @@ function Upload() {
               placeholder="e.g., cat, funny, dancing, reaction"
               value={tags}
               onChange={(e) => setTags(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               disabled={uploading}
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Add at least 3 descriptive tags to help others find your GIFs
             </p>
             {tags && (
@@ -202,7 +212,7 @@ function Upload() {
                   return trimmedTag ? (
                     <span
                       key={i}
-                      className="bg-purple-100 text-purple-700 px-2 py-1 rounded text-sm"
+                      className="bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300 px-2 py-1 rounded text-sm"
                     >
                       {trimmedTag}
                     </span>
@@ -213,11 +223,11 @@ function Upload() {
           </div>
 
           {/* Upload Guidelines */}
-          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <h4 className="font-semibold text-blue-900 mb-2">
+          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-900/30 rounded-lg">
+            <h4 className="font-semibold text-blue-900 dark:text-blue-300 mb-2">
               Upload Guidelines
             </h4>
-            <ul className="text-sm text-blue-800 space-y-1">
+            <ul className="text-sm text-blue-800 dark:text-blue-400 space-y-1">
               <li>• Maximum file size: 20 MB per GIF</li>
               <li>• Only .gif files are accepted</li>
               <li>• Original quality will be preserved</li>

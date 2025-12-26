@@ -7,14 +7,13 @@ import {
   Link as LinkIcon,
   Trash2,
 } from "lucide-react";
-import { useAuth } from "../contexts/AuthContext";
-import { favoritesAPI } from "../services/api";
+import { useAuth } from "../contexts/auth";
+import api, { favoritesAPI } from "../services/api";
 import { useNavigate, Link } from "react-router-dom";
 
 function Favorites() {
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [favoritesMap, setFavoritesMap] = useState({});
   const { user } = useAuth();
 
   useEffect(() => {
@@ -26,13 +25,6 @@ function Favorites() {
       setLoading(true);
       const response = await favoritesAPI.getFavorites();
       setFavorites(response.data.gifs);
-
-      // Create favorites map
-      const map = {};
-      response.data.gifs.forEach((gif) => {
-        map[gif.id] = true;
-      });
-      setFavoritesMap(map);
     } catch (error) {
       console.error("Error fetching favorites:", error);
     } finally {
@@ -46,11 +38,6 @@ function Favorites() {
 
       // Remove from list
       setFavorites((prev) => prev.filter((gif) => gif.id !== gifId));
-      setFavoritesMap((prev) => {
-        const newMap = { ...prev };
-        delete newMap[gifId];
-        return newMap;
-      });
     } catch (error) {
       console.error("Error toggling favorite:", error);
     }
@@ -71,7 +58,7 @@ function Favorites() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
       <header className="bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg">
         <div className="container mx-auto px-4 py-4 max-w-7xl">
@@ -91,17 +78,19 @@ function Favorites() {
 
       {/* Content */}
       <main className="container mx-auto px-4 py-6 max-w-7xl">
-        <div className="mb-4 text-gray-600 font-medium">
+        <div className="mb-4 text-gray-600 dark:text-gray-400 font-medium">
           {loading
             ? "Loading..."
-            : `${favorites.length} favorited GIF${favorites.length !== 1 ? "s" : ""}`}
+            : `${favorites.length} favorited GIF${
+                favorites.length !== 1 ? "s" : ""
+              }`}
         </div>
 
         {/* Loading state */}
         {loading && (
           <div className="text-center py-20">
             <div className="animate-spin rounded-full h-16 w-16 border-4 border-purple-200 border-t-purple-600 mx-auto"></div>
-            <p className="mt-4 text-gray-500 font-medium">
+            <p className="mt-4 text-gray-500 dark:text-gray-400 font-medium">
               Loading favorites...
             </p>
           </div>
@@ -115,6 +104,8 @@ function Favorites() {
                 <FavoriteGifCard
                   gif={gif}
                   onToggleFavorite={handleToggleFavorite}
+                  onDelete={handleDeleteGif}
+                  currentUserId={user.userId}
                 />
               </div>
             ))}
@@ -124,12 +115,15 @@ function Favorites() {
         {/* Empty state */}
         {!loading && favorites.length === 0 && (
           <div className="text-center py-20">
-            <div className="bg-white rounded-xl shadow-lg p-12 max-w-md mx-auto">
-              <Heart size={64} className="mx-auto mb-4 text-gray-300" />
-              <h2 className="text-2xl font-bold text-gray-700 mb-2">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-12 max-w-md mx-auto">
+              <Heart
+                size={64}
+                className="mx-auto mb-4 text-gray-300 dark:text-gray-500"
+              />
+              <h2 className="text-2xl font-bold text-gray-700 dark:text-gray-200 mb-2">
                 No favorites yet
               </h2>
-              <p className="text-gray-500 mb-6">
+              <p className="text-gray-500 dark:text-gray-400 mb-6">
                 Start favoriting GIFs you love!
               </p>
               <Link
@@ -209,13 +203,13 @@ function FavoriteGifCard({ gif, onToggleFavorite, onDelete, currentUserId }) {
 
   return (
     <div
-      className="group relative bg-white rounded-lg shadow hover:shadow-xl transition-all overflow-hidden cursor-pointer"
+      className="group relative bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-xl transition-all overflow-hidden cursor-pointer"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleClick}
     >
       {/* GIF Display Area */}
-      <div className="relative overflow-hidden w-full bg-gray-200">
+      <div className="relative overflow-hidden w-full bg-gray-200 dark:bg-gray-700">
         {!imageError ? (
           <img
             src={isHovered ? gifUrl : thumbnailUrl}
@@ -258,21 +252,23 @@ function FavoriteGifCard({ gif, onToggleFavorite, onDelete, currentUserId }) {
         <button
           onClick={copyLink}
           className={`p-2.5 rounded-full shadow-lg hover:scale-110 transition-all duration-200 ${
-            copied ? "bg-green-500" : "bg-white"
+            copied ? "bg-green-500" : "bg-white dark:bg-gray-700"
           }`}
           title={copied ? "Copied!" : "Copy Link"}
         >
           <LinkIcon
             size={18}
-            className={copied ? "text-white" : "text-gray-700"}
+            className={
+              copied ? "text-white" : "text-gray-700 dark:text-gray-200"
+            }
           />
         </button>
         <button
           onClick={downloadGif}
-          className="p-2.5 bg-white rounded-full shadow-lg hover:scale-110 transition-all duration-200"
+          className="p-2.5 bg-white dark:bg-gray-700 rounded-full shadow-lg hover:scale-110 transition-all duration-200"
           title="Download GIF"
         >
-          <Download size={18} className="text-gray-700" />
+          <Download size={18} className="text-gray-700 dark:text-gray-200" />
         </button>
 
         {/* Delete button - only show if user owns the GIF */}

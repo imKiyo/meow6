@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import {
   Search,
@@ -9,7 +9,7 @@ import {
   Download,
   Link as LinkIcon,
 } from "lucide-react";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../contexts/auth";
 import api from "../services/api";
 import { favoritesAPI } from "../services/api";
 import { useNavigate } from "react-router-dom";
@@ -23,18 +23,7 @@ function Home() {
   const [favorites, setFavorites] = useState({});
   const { user, logout } = useAuth();
 
-  useEffect(() => {
-    fetchGifs();
-  }, [searchQuery, selectedTags, sortBy]);
-
-  // Check favorites when GIFs change
-  useEffect(() => {
-    if (gifs.length > 0) {
-      checkFavorites();
-    }
-  }, [gifs]);
-
-  const fetchGifs = async () => {
+  const fetchGifs = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
@@ -51,9 +40,9 @@ function Home() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchQuery, selectedTags, sortBy]);
 
-  const checkFavorites = async () => {
+  const checkFavorites = useCallback(async () => {
     try {
       const gifIds = gifs.map((g) => g.id);
       const response = await favoritesAPI.checkFavorites(gifIds);
@@ -61,7 +50,18 @@ function Home() {
     } catch (error) {
       console.error("Error checking favorites:", error);
     }
-  };
+  }, [gifs]);
+
+  useEffect(() => {
+    fetchGifs();
+  }, [fetchGifs]);
+
+  // Check favorites when GIFs change
+  useEffect(() => {
+    if (gifs.length > 0) {
+      checkFavorites();
+    }
+  }, [gifs, checkFavorites]);
 
   const handleToggleFavorite = async (gifId) => {
     try {
@@ -96,7 +96,7 @@ function Home() {
   const allTags = [...new Set(gifs.flatMap((gif) => gif.tags || []))];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
       <header className="bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg">
         <div className="container mx-auto px-4 py-4 max-w-7xl">
@@ -142,13 +142,13 @@ function Home() {
                 placeholder="Search by tags or uploader..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-300"
+                className="w-full pl-10 pr-4 py-3 rounded-lg text-gray-900 bg-white dark:bg-gray-800 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-300"
               />
             </div>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="px-4 py-3 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-300"
+              className="px-4 py-3 rounded-lg text-gray-900 bg-white dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-300"
             >
               <option value="recent">Recent</option>
               <option value="popular">Popular</option>
@@ -162,7 +162,7 @@ function Home() {
         {/* Tag filters */}
         {allTags.length > 0 && (
           <div className="mb-6">
-            <h3 className="text-sm font-semibold text-gray-600 mb-3 uppercase tracking-wide">
+            <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-3 uppercase tracking-wide">
               Quick Filters
             </h3>
             <div className="flex flex-wrap gap-2">
@@ -173,7 +173,7 @@ function Home() {
                   className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
                     selectedTags.includes(tag)
                       ? "bg-purple-600 text-white shadow-md"
-                      : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
+                      : "bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600"
                   }`}
                 >
                   {tag}
@@ -192,7 +192,7 @@ function Home() {
         )}
 
         {/* Results count */}
-        <div className="mb-4 text-gray-600 font-medium">
+        <div className="mb-4 text-gray-600 dark:text-gray-400 font-medium">
           {loading
             ? "Loading..."
             : `${gifs.length} GIF${gifs.length !== 1 ? "s" : ""} found`}
@@ -202,7 +202,9 @@ function Home() {
         {loading && (
           <div className="text-center py-20">
             <div className="animate-spin rounded-full h-16 w-16 border-4 border-purple-200 border-t-purple-600 mx-auto"></div>
-            <p className="mt-4 text-gray-500 font-medium">Loading GIFs...</p>
+            <p className="mt-4 text-gray-500 dark:text-gray-400 font-medium">
+              Loading GIFs...
+            </p>
           </div>
         )}
 
@@ -224,12 +226,17 @@ function Home() {
         {/* Empty state */}
         {!loading && gifs.length === 0 && (
           <div className="text-center py-20">
-            <div className="bg-white rounded-xl shadow-lg p-12 max-w-md mx-auto">
-              <Search size={64} className="mx-auto mb-4 text-gray-300" />
-              <h2 className="text-2xl font-bold text-gray-700 mb-2">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-12 max-w-md mx-auto">
+              <Search
+                size={64}
+                className="mx-auto mb-4 text-gray-300 dark:text-gray-500"
+              />
+              <h2 className="text-2xl font-bold text-gray-700 dark:text-gray-200 mb-2">
                 No GIFs found
               </h2>
-              <p className="text-gray-500 mb-6">Be the first to upload!</p>
+              <p className="text-gray-500 dark:text-gray-400 mb-6">
+                Be the first to upload!
+              </p>
               <Link
                 to="/upload"
                 className="inline-flex items-center gap-2 bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition font-semibold"
@@ -301,13 +308,13 @@ function GifCard({ gif, favorites, onToggleFavorite }) {
 
   return (
     <div
-      className="group relative bg-white rounded-lg shadow hover:shadow-xl transition-all overflow-hidden cursor-pointer"
+      className="group relative bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-xl transition-all overflow-hidden cursor-pointer"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleClick}
     >
       {/* GIF Display Area - Natural aspect ratio */}
-      <div className="relative overflow-hidden w-full bg-gray-200">
+      <div className="relative overflow-hidden w-full bg-gray-200 dark:bg-gray-700">
         {!imageError ? (
           <img
             src={isHovered ? gifUrl : thumbnailUrl}
@@ -351,33 +358,39 @@ function GifCard({ gif, favorites, onToggleFavorite }) {
           onClick={handleToggleFavorite}
           disabled={isTogglingFavorite}
           className={`p-2.5 rounded-full shadow-lg hover:scale-110 transition-all duration-200 ${
-            isFavorited ? "bg-red-500" : "bg-white"
+            isFavorited ? "bg-red-500" : "bg-white dark:bg-gray-700"
           }`}
           title={isFavorited ? "Unfavorite" : "Favorite"}
         >
           <Heart
             size={18}
-            className={isFavorited ? "fill-white text-white" : "text-gray-700"}
+            className={
+              isFavorited
+                ? "fill-white text-white"
+                : "text-gray-700 dark:text-gray-200"
+            }
           />
         </button>
         <button
           onClick={copyLink}
           className={`p-2.5 rounded-full shadow-lg hover:scale-110 transition-all duration-200 ${
-            copied ? "bg-green-500" : "bg-white"
+            copied ? "bg-green-500" : "bg-white dark:bg-gray-700"
           }`}
           title={copied ? "Copied!" : "Copy Link"}
         >
           <LinkIcon
             size={18}
-            className={copied ? "text-white" : "text-gray-700"}
+            className={
+              copied ? "text-white" : "text-gray-700 dark:text-gray-200"
+            }
           />
         </button>
         <button
           onClick={downloadGif}
-          className="p-2.5 bg-white rounded-full shadow-lg hover:scale-110 transition-all duration-200"
+          className="p-2.5 bg-white dark:bg-gray-700 rounded-full shadow-lg hover:scale-110 transition-all duration-200"
           title="Download GIF"
         >
-          <Download size={18} className="text-gray-700" />
+          <Download size={18} className="text-gray-700 dark:text-gray-200" />
         </button>
       </div>
 
