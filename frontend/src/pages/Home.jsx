@@ -344,60 +344,43 @@ function GifCard({ gif, favorites, onToggleFavorite }) {
               <User size={14} />
               <span className="truncate">{gif.uploader_username}</span>
             </span>
-            <span className="flex items-center gap-1.5 font-medium text-sm">
-              <Heart size={14} className={isFavorited ? "fill-red-400" : ""} />
+            <button
+              onClick={handleToggleFavorite}
+              disabled={isTogglingFavorite}
+              className="flex items-center gap-1.5 font-medium text-sm hover:scale-110 transition-transform"
+              title={isFavorited ? "Unfavorite" : "Favorite"}
+            >
+              <Heart
+                size={14}
+                className={
+                  isFavorited
+                    ? "fill-red-400 text-red-400"
+                    : "fill-white text-white"
+                }
+              />
               {gif.favorite_count}
-            </span>
+            </button>
           </div>
         </div>
-      </div>
 
-      {/* Action Buttons - Only on hover */}
-      <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-        <button
-          onClick={handleToggleFavorite}
-          disabled={isTogglingFavorite}
-          className={`p-2.5 rounded-full shadow-lg hover:scale-110 transition-all duration-200 ${
-            isFavorited ? "bg-red-500" : "bg-white dark:bg-gray-700"
-          }`}
-          title={isFavorited ? "Unfavorite" : "Favorite"}
-        >
-          <Heart
-            size={18}
-            className={
-              isFavorited
-                ? "fill-white text-white"
-                : "text-gray-700 dark:text-gray-200"
-            }
-          />
-        </button>
+        {/* Copy Link Button - Small and transparent */}
         <button
           onClick={copyLink}
-          className={`p-2.5 rounded-full shadow-lg hover:scale-110 transition-all duration-200 ${
-            copied ? "bg-green-500" : "bg-white dark:bg-gray-700"
+          className={`absolute top-2 right-2 p-1.5 rounded-full transition-all duration-200 ${
+            copied
+              ? "bg-green-500/90 opacity-100"
+              : "bg-black/30 opacity-0 group-hover:opacity-100 hover:bg-black/50"
           }`}
           title={copied ? "Copied!" : "Copy Link"}
         >
-          <LinkIcon
-            size={18}
-            className={
-              copied ? "text-white" : "text-gray-700 dark:text-gray-200"
-            }
-          />
-        </button>
-        <button
-          onClick={downloadGif}
-          className="p-2.5 bg-white dark:bg-gray-700 rounded-full shadow-lg hover:scale-110 transition-all duration-200"
-          title="Download GIF"
-        >
-          <Download size={18} className="text-gray-700 dark:text-gray-200" />
+          <LinkIcon size={14} className="text-white" />
         </button>
       </div>
 
       {/* Copied notification */}
       {copied && (
-        <div className="absolute top-16 right-3 bg-green-500 text-white px-3 py-1 rounded-lg shadow-lg text-sm font-medium animate-pulse">
-          Link copied!
+        <div className="absolute top-10 right-2 bg-green-500 text-white px-2 py-1 rounded text-xs font-medium">
+          Copied!
         </div>
       )}
     </div>

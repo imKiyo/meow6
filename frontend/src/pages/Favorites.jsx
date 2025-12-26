@@ -239,54 +239,42 @@ function FavoriteGifCard({ gif, onToggleFavorite, onDelete, currentUserId }) {
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-        <button
-          onClick={handleToggleFavorite}
-          disabled={isTogglingFavorite}
-          className="p-2.5 bg-red-500 rounded-full shadow-lg hover:scale-110 transition-all duration-200"
-          title="Unfavorite"
-        >
-          <Heart size={18} className="fill-white text-white" />
-        </button>
-        <button
-          onClick={copyLink}
-          className={`p-2.5 rounded-full shadow-lg hover:scale-110 transition-all duration-200 ${
-            copied ? "bg-green-500" : "bg-white dark:bg-gray-700"
-          }`}
-          title={copied ? "Copied!" : "Copy Link"}
-        >
-          <LinkIcon
-            size={18}
-            className={
-              copied ? "text-white" : "text-gray-700 dark:text-gray-200"
-            }
-          />
-        </button>
-        <button
-          onClick={downloadGif}
-          className="p-2.5 bg-white dark:bg-gray-700 rounded-full shadow-lg hover:scale-110 transition-all duration-200"
-          title="Download GIF"
-        >
-          <Download size={18} className="text-gray-700 dark:text-gray-200" />
-        </button>
-
-        {/* Delete button - only show if user owns the GIF */}
-        {isOwner && (
+      {/* Info Bar - Only on hover - Now with clickable heart */}
+      <div className="absolute bottom-0 left-0 right-0 p-3 transform translate-y-full group-hover:translate-y-0 transition-transform duration-200">
+        <div className="flex items-center justify-between text-white">
+          <span className="flex items-center gap-1.5 font-medium text-sm">
+            <User size={14} />
+            <span className="truncate">{gif.uploader_username}</span>
+          </span>
           <button
-            onClick={handleDelete}
-            className="p-2.5 bg-red-600 rounded-full shadow-lg hover:scale-110 hover:bg-red-700 transition-all duration-200"
-            title="Delete GIF"
+            onClick={handleToggleFavorite}
+            disabled={isTogglingFavorite}
+            className="flex items-center gap-1.5 font-medium text-sm hover:scale-110 transition-transform"
+            title="Unfavorite"
           >
-            <Trash2 size={18} className="text-white" />
+            <Heart size={14} className="fill-red-400 text-red-400" />
+            {gif.favorite_count}
           </button>
-        )}
+        </div>
       </div>
+
+      {/* Copy Link Button - Small and transparent */}
+      <button
+        onClick={copyLink}
+        className={`absolute top-2 right-2 p-1.5 rounded-full transition-all duration-200 ${
+          copied
+            ? "bg-green-500/90 opacity-100"
+            : "bg-black/30 opacity-0 group-hover:opacity-100 hover:bg-black/50"
+        }`}
+        title={copied ? "Copied!" : "Copy Link"}
+      >
+        <LinkIcon size={14} className="text-white" />
+      </button>
 
       {/* Copied notification */}
       {copied && (
-        <div className="absolute top-16 right-3 bg-green-500 text-white px-3 py-1 rounded-lg shadow-lg text-sm font-medium animate-pulse">
-          Link copied!
+        <div className="absolute top-10 right-2 bg-green-500 text-white px-2 py-1 rounded text-xs font-medium">
+          Copied!
         </div>
       )}
     </div>
