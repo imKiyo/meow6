@@ -1,15 +1,28 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Sun, Moon, Monitor, Save } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ArrowLeft, Sun, Moon, Monitor, EyeOff, Eye } from "lucide-react";
 import { useAuth } from "../contexts/auth";
+import api from "../services/api";
 
 function Settings() {
   const { user, theme, setTheme } = useAuth();
+  const [showNsfw, setShowNsfw] = useState(user?.show_nsfw || false);
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const handleNsfwToggle = async () => {
+    try {
+      setSaving(true);
+      const newValue = !showNsfw;
+      await api.put("/users/settings", { show_nsfw: newValue });
+      setShowNsfw(newValue);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (error) {
+      console.error("Failed to update NSFW setting:", error);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -101,14 +114,35 @@ function Settings() {
             </div>
           </div>
 
-          {/* Placeholders for future settings */}
+          {/* Content Filters */}
           <div className="border-b dark:border-gray-700 pb-6">
             <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
               Content Filters
             </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Coming soon: NSFW filter, search behavior, and more.
-            </p>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Show NSFW Content
+                </label>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Allow GIFs tagged with "nsfw" to appear in searches
+                </p>
+              </div>
+              <button
+                onClick={handleNsfwToggle}
+                disabled={saving}
+                className={`relative inline-flex h-8 w-14 items-center rounded-full transition ${
+                  showNsfw ? "bg-purple-600" : "bg-gray-300 dark:bg-gray-600"
+                }`}
+              >
+                <span
+                  className={`inline-block h-6 w-6 transform rounded-full bg-white transition ${
+                    showNsfw ? "translate-x-7" : "translate-x-1"
+                  }`}
+                />
+              </button>
+            </div>
           </div>
 
           <div>

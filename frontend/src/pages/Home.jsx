@@ -105,18 +105,18 @@ function Home() {
             <h1 className="text-3xl font-bold">🎬 GifStash</h1>
             <div className="flex gap-3 items-center">
               <Link
-                to="/favorites"
-                className="flex items-center gap-2 bg-white/20 px-4 py-2 rounded-lg hover:bg-white/30 transition font-semibold"
-              >
-                <Heart size={18} />
-                <span className="hidden sm:inline">Favorites</span>
-              </Link>
-              <Link
                 to="/upload"
                 className="flex items-center gap-2 bg-white text-purple-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition font-semibold"
               >
                 <Upload size={18} />
                 Upload
+              </Link>
+              <Link
+                to="/favorites"
+                className="flex items-center gap-2 bg-white/20 px-4 py-2 rounded-lg hover:bg-white/30 transition"
+                title="Favorites"
+              >
+                <Heart size={18} />
               </Link>
               <Link
                 to="/settings"

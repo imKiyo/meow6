@@ -22,6 +22,7 @@ app.use(express.urlencoded({ extended: true }));
 const authRoutes = require("./routes/authRoutes");
 const gifRoutes = require("./routes/gifRoutes");
 const favoritesRoutes = require("./routes/favoritesRoutes");
+const userRoutes = require("./routes/userRoutes");
 
 // Serve static files (GIFs and thumbnails) with CORS
 app.use(
@@ -53,3 +54,5 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Health check: http://localhost:${PORT}/api/health`);
 });
+
+app.use("/api/users", userRoutes);

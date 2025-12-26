@@ -8,12 +8,25 @@ router.post("/login", authController.login);
 
 // Protected test route
 router.get("/me", auth, async (req, res) => {
+  const pool = require("../config/database");
+  const result = await pool.query(
+    "SELECT id, username, email, show_nsfw FROM users WHERE id = $1",
+    [req.user.userId],
+  );
+
+  if (result.rows.length === 0) {
+    return res.status(404).json({ error: "User not found" });
+  }
+
+  const user = result.rows[0];
   res.json({
     message: "Auth is working!",
     user: {
-      id: req.user.userId, // Add this
-      userId: req.user.userId, // Keep for backward compatibility
-      username: req.user.username,
+      id: user.id,
+      userId: user.id,
+      username: user.username,
+      email: user.email,
+      show_nsfw: user.show_nsfw,
     },
   });
 });

@@ -53,6 +53,7 @@ exports.register = async (req, res) => {
         id: user.id,
         username: user.username,
         email: user.email,
+        show_nsfw: false,
       },
     });
   } catch (error) {
@@ -102,6 +103,7 @@ exports.login = async (req, res) => {
         id: user.id,
         username: user.username,
         email: user.email,
+        show_nsfw: user.show_nsfw,
       },
     });
   } catch (error) {

@@ -145,6 +145,18 @@ exports.getGifs = async (req, res) => {
       offset = 0,
     } = req.query;
 
+    const userId = req.user?.userId;
+
+    // Get user's NSFW preference
+    let showNsfw = false;
+    if (userId) {
+      const userResult = await pool.query(
+        "SELECT show_nsfw FROM users WHERE id = $1",
+        [userId],
+      );
+      showNsfw = userResult.rows[0]?.show_nsfw || false;
+    }
+
     let query = `
       SELECT DISTINCT g.*,
              array_agg(DISTINCT t.name) as tags,
@@ -158,6 +170,15 @@ exports.getGifs = async (req, res) => {
 
     const params = [];
     let paramCount = 1;
+
+    // Filter NSFW if user hasn't enabled it
+    if (!showNsfw) {
+      query += ` AND NOT EXISTS (
+        SELECT 1 FROM gif_tags gt_nsfw
+        JOIN tags t_nsfw ON gt_nsfw.tag_id = t_nsfw.id
+        WHERE gt_nsfw.gif_id = g.id AND t_nsfw.name = 'nsfw'
+      )`;
+    }
 
     // Filter by tags
     if (tags) {
