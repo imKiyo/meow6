@@ -1,8 +1,8 @@
 TO DO:
 
-<s>- unique mosaic view of all the present gifs deppended of its sizes</s>
-<s>- if multiple images are being uploaded then each gif should have its own tags to fill</s>
-<s>- allow upload of gifs through the link?</s> # its not perfect yet but sortoff works
+- <s>unique mosaic view of all the present gifs deppended of its sizes</s>
+- <s>if multiple images are being uploaded then each gif should have its own tags to fill</s>
+- <s>allow upload of gifs through the link?</s> # its not perfect yet but sortoff works
 - gif buttons from the preview should be moved to the bottom in a cleaner way
 - clean header and make it consistent
 - gif details should popout on the same page in a smaller window when you leftclick instead of its own page(?)
