@@ -13,6 +13,10 @@ export const AuthProvider = ({ children, theme, setTheme }) => {
     setUser(null);
   }, []);
 
+  const updateUserSettings = (newSettings) => {
+    setUser((prev) => ({ ...prev, ...newSettings }));
+  };
+
   const verifyToken = useCallback(async () => {
     try {
       const response = await api.get("/auth/me");
@@ -70,6 +74,7 @@ export const AuthProvider = ({ children, theme, setTheme }) => {
         isAuthenticated: !!user,
         theme,
         setTheme,
+        updateUserSettings, // Add this
       }}
     >
       {children}

@@ -5,7 +5,7 @@ import { useAuth } from "../contexts/auth";
 import api from "../services/api";
 
 function Settings() {
-  const { user, theme, setTheme } = useAuth();
+  const { user, theme, setTheme, updateUserSettings } = useAuth();
   const [showNsfw, setShowNsfw] = useState(user?.show_nsfw || false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -16,6 +16,7 @@ function Settings() {
       const newValue = !showNsfw;
       await api.put("/users/settings", { show_nsfw: newValue });
       setShowNsfw(newValue);
+      updateUserSettings({ show_nsfw: newValue });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (error) {
