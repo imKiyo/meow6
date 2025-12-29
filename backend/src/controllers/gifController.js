@@ -6,6 +6,7 @@ const {
   deleteFile,
   getFileSize,
 } = require("../utils/fileProcessor");
+const { generateTags } = require("../utils/aiTagger");
 
 /**
  * Upload a new GIF
@@ -21,21 +22,34 @@ exports.uploadGif = async (req, res) => {
 
     const { tags } = req.body;
 
+    // If no tags provided, use AI to generate them
+    let tagArray = [];
+    let aiGenerated = false;
+
     // Validate tags
     if (!tags || tags.trim().length === 0) {
-      await deleteFile(req.file.path);
-      return res.status(400).json({ error: "At least one tag is required" });
-    }
+      console.log("Generating AI tags for:", req.file.path);
+      const aiResult = await generateTags(req.file.path);
 
-    // Parse tags (comma-separated)
-    const tagArray = tags
-      .split(",")
-      .map((tag) => tag.trim().toLowerCase())
-      .filter((tag) => tag.length > 0);
+      if (aiResult.success) {
+        tagArray = aiResult.tags;
+        aiGenerated = true;
+        console.log("AI generated tags:", tagArray);
+      } else {
+        await deleteFile(req.file.path);
+        return res.status(500).json({ error: "Failed to generate tags" });
+      }
+    } else {
+      // User provided tags
+      tagArray = tags
+        .split(",")
+        .map((tag) => tag.trim().toLowerCase())
+        .filter((tag) => tag.length > 0);
 
-    if (tagArray.length < 3) {
-      await deleteFile(req.file.path);
-      return res.status(400).json({ error: "At least 3 tags are required" });
+      if (tagArray.length < 3) {
+        await deleteFile(req.file.path);
+        return res.status(400).json({ error: "At least 3 tags are required" });
+      }
     }
 
     // Get file metadata
@@ -114,6 +128,7 @@ exports.uploadGif = async (req, res) => {
     res.status(201).json({
       message: "GIF uploaded successfully",
       gif: completeGifResult.rows[0],
+      ai_generated: aiGenerated,
     });
   } catch (error) {
     // Rollback transaction on error

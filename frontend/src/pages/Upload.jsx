@@ -114,9 +114,13 @@ function Upload() {
       return { ...item, tags: finalTags };
     });
 
+    // Allow files with 0 tags (AI will generate them)
+    // But if user added tags, require at least 3
     for (const item of finalizedFiles) {
-      if (item.tags.length < 3) {
-        setError(`"${item.file.name}" needs at least 3 tags.`);
+      if (item.tags.length > 0 && item.tags.length < 3) {
+        setError(
+          `"${item.file.name}" has ${item.tags.length} tag(s). Either add 3+ tags or leave empty for AI tagging.`,
+        );
         return;
       }
     }
@@ -127,7 +131,10 @@ function Upload() {
       for (const item of finalizedFiles) {
         const formData = new FormData();
         formData.append("gif", item.file);
-        formData.append("tags", item.tags.join(", "));
+        // Only add tags if user provided them
+        if (item.tags.length > 0) {
+          formData.append("tags", item.tags.join(", "));
+        }
 
         await api.post("/gifs/upload", formData, {
           headers: { "Content-Type": "multipart/form-data" },
@@ -258,24 +265,23 @@ function Upload() {
                         ))}
                         <input
                           type="text"
-                          value={item.currentInput}
                           placeholder={
-                            item.tags.length === 0 ? "Add 3+ tags..." : ""
+                            item.tags.length === 0
+                              ? "Type tags and press Enter/Comma (or leave empty for AI)"
+                              : "Add more tags..."
                           }
-                          onChange={(e) => updateInput(fileIdx, e.target.value)}
+                          value={item.currentInput}
                           onKeyDown={(e) => handleKeyDown(fileIdx, e)}
-                          className="flex-1 min-w-[120px] bg-transparent outline-none text-sm text-gray-800 dark:text-gray-100"
+                          onChange={(e) => updateInput(fileIdx, e.target.value)}
+                          className="flex-1 outline-none bg-transparent text-sm text-gray-900 dark:text-gray-100"
                           disabled={uploading}
                         />
                       </div>
 
                       {/* Restored Progress/Requirements Helper */}
-                      <p
-                        className={`mt-2 text-[10px] font-medium ${item.tags.length < 3 ? "text-gray-400" : "text-green-500"}`}
-                      >
-                        {item.tags.length < 3
-                          ? `${3 - item.tags.length} more tag${3 - item.tags.length !== 1 ? "s" : ""} required`
-                          : "Tag requirement met!"}
+                      <p className="text-xs text-gray-500 mt-1">
+                        Optional: Add custom tags, or leave empty to let AI tag
+                        automatically
                       </p>
                     </div>
                   </div>
