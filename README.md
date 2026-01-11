@@ -2,9 +2,9 @@ TO DO:
 
 - <s>unique mosaic view of all the present gifs deppended of its sizes</s>
 - <s>if multiple images are being uploaded then each gif should have its own tags to fill</s>
-- <s>allow upload of gifs through the link?</s> # its not perfect yet but sortoff works
-- gif buttons from the preview should be moved to the bottom in a cleaner way
-- clean header and make it consistent
+- <s>allow upload of gifs through the link?</s>
+- <s>gif buttons from the preview should be moved to the bottom in a cleaner way</s>
+- <s>clean header</s> and make it consistent
 - gif details should popout on the same page in a smaller window when you leftclick instead of its own page(?)
 - shortcut to highlight searchbar
 - remember the current search and mby scroll position so going back would not reset the view to top
@@ -15,8 +15,9 @@ TO DO:
 - user collections
 - gif visibilities
 - user groups? for sharing files
-- account settings
+- <s>account settings</s>
   - dark mode option (im already blind) # almost done
   - autoplay every gif seen?
+  - <s>nsfw visibility toggle</s>
 - stresstest many gifs on a single side and decide if any optimalization steps are further needed
 - more secure checks and usage limits/cd's?

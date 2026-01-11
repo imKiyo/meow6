@@ -1,11 +1,11 @@
 # Dependencies
 node_modules/
 
-# Images/Storage (The stuff you asked to hide)
+# Images/Storage
 backend/storage/gifs/*
 backend/storage/thumbnails/*
 !backend/storage/gifs/.gitkeep
-!backend/storage/thumbnails/.gitkeep
+backend/storage/thumbnails/.gitkeep
 
 # Database files
 *.sqlite
@@ -16,7 +16,16 @@ backend/*.sqlite
 
 # Environment variables
 .env
-.env.local
+.env.*
+backend/.env
+backend/.env.*
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
 
 # Build outputs
 dist/
+
+# Logs
+*.log
+npm-debug.log*
